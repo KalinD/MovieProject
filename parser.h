@@ -11,6 +11,8 @@
 #define MOVIE_PARSE_ERROR 1
 #define TAGS_PARSE_ERROR 2
 
+#define MAX_LINE_LENGTH 300U // Longest found was 200-250
+
 int get_movies_count(unsigned long long *count);
 int parse_all(Movie_t* movies);
 

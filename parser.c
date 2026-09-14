@@ -2,10 +2,7 @@
 
 static int parse_movie(const char* line, Movie_t* movie);
 static int parse_tag(const char* line, unsigned long long* out_movie_id, char** out_tag);
-// static int add_tag_to_movie(char* tag, unsigned char tag_size, unsigned long long movie_id, Movie_t* movies, unsigned long long movies_count);
-// static int get_movie_by_id(unsigned long long movie_id, Movie_t* movies, Movie_t** out_movie);
-static int get_movie_by_id(unsigned long long movie_id, Movie_t* movies, unsigned long long* out_movie_index);
-
+static int get_movie_by_id(const unsigned long long movie_id, Movie_t const * const movies, unsigned long long* out_movie_index);
 
 int get_movies_count(unsigned long long *count) {
     FILE* file = fopen("./movies.dat", "r");
@@ -40,8 +37,8 @@ int parse_all(Movie_t* movies) {
     }
 
     unsigned long long movie_index = 0;
-    char line[300] = {'\0'};
-    while (NULL != fgets(line, 300, file)) {
+    char line[MAX_LINE_LENGTH] = {'\0'};
+    while (NULL != fgets(line, MAX_LINE_LENGTH, file)) {
         parse_movie(line, &movies[movie_index]);
         ++movie_index;
     }
@@ -58,11 +55,11 @@ int parse_all(Movie_t* movies) {
         return MOVIE_PARSE_ERROR;
     }
 
-    while (NULL != fgets(line, 300, file)) { // Longest Tag line was around 111 characters
+    while (NULL != fgets(line, MAX_LINE_LENGTH, file)) { // Longest Tag line was around 111 characters
         unsigned long long movie_id = 0;
         char* tag;
         parse_tag(line, &movie_id, &tag);
-        // Movie_t* current_movie = NULL;
+
         unsigned long long current_movie_index = 0;
         const int ret_val = get_movie_by_id(movie_id, movies, &current_movie_index);
         if (0 != ret_val) {
@@ -75,13 +72,12 @@ int parse_all(Movie_t* movies) {
         unsigned short i = 0;
         if (0 != movies[current_movie_index].tags_count) {
             for (i = 0U; i < movies[current_movie_index].tags_count; ++i) {
-                // strcpy(new_tags[i], current_movie->tags[i]);
                 new_tags[i] = movies[current_movie_index].tags[i];
             }
         } else {
             movies[current_movie_index].tags = malloc((sizeof(char*)));
         }
-        // strcpy(new_tags[i], tag)
+
         new_tags[i] = tag;
         if (NULL != movies[current_movie_index].tags) {
             free(movies[current_movie_index].tags);
@@ -100,59 +96,59 @@ int parse_all(Movie_t* movies) {
 }
 
 static int parse_tag(const char* line, unsigned long long* out_movie_id, char** out_tag) {
-    unsigned long user_id = 0;
+    unsigned long user_id = 0U;
     unsigned short index = 0U;
 
     // Working on User ID - currently ignored
-    while ((index < 300) && (':' != line[index])) {
-        user_id = (user_id * 10) + (line[index] - '0');
+    while ((index < MAX_LINE_LENGTH) && (':' != line[index])) {
+        user_id = (user_id * 10U) + (line[index] - '0');
         ++index;
     }
-    if (index >= 300) {
+    if (index >= (MAX_LINE_LENGTH - 1U)) {
         return TAGS_PARSE_ERROR;
     }
-    index += 2; // Skip "::"
+    index += 2U; // Skip "::"
 
     // Working on Movie ID
-    unsigned long long movie_id = 0;
-    while ((index < 300) && (':' != line[index])) {
-        movie_id = (movie_id * 10) + (line[index] - '0');
+    unsigned long long movie_id = 0U;
+    while ((index < MAX_LINE_LENGTH) && (':' != line[index])) {
+        movie_id = (movie_id * 10U) + (line[index] - '0');
         ++index;
     }
-    if (index >= 300) {
+    if (index >= (MAX_LINE_LENGTH - 1U)) {
         return TAGS_PARSE_ERROR;
     }
     *out_movie_id = movie_id;
-    index += 2; // Skip "::"
+    index += 2U; // Skip "::"
 
     // Working on Movie Tag
     const unsigned char tag_start = index;
-    while (index < 299) {
+    while (index < (MAX_LINE_LENGTH - 1U)) {
         ++index;
-        if ((':' == line[index]) && (':' == line[index + 1])) {
+        if ((':' == line[index]) && (':' == line[index + 1U])) {
             break;
         }
     }
 
-    if (index >= 299) {
+    if (index >= (MAX_LINE_LENGTH - 1U)) {
         return TAGS_PARSE_ERROR;
     }
 
-    char* tag = (char*) malloc(sizeof(char) * (index - tag_start + 1));
+    char* tag = (char*) malloc(sizeof(char) * (index - tag_start + 1U));
     for (unsigned short position = tag_start; position < index; ++position) {
         tag[position - tag_start] = line[position];
     }
     tag[index - tag_start] = '\0';  // Add terminating 0
     *out_tag = tag;
-    index += 2; // Skip "::"
+    index += 2U; // Skip "::"
 
     // Working on Timestamp - Not used yet
-    unsigned long long timestamp = 0;
-    while ((index < 300) && ('\0' != line[index])) {
-        timestamp = (timestamp * 10) + (line[index] - '0');
+    unsigned long long timestamp = 0U;
+    while ((index < MAX_LINE_LENGTH) && ('\0' != line[index])) {
+        timestamp = (timestamp * 10U) + (line[index] - '0');
         ++index;
     }
-    if (index >= 300) {
+    if (index >= MAX_LINE_LENGTH) {
         return TAGS_PARSE_ERROR;
     }
 
@@ -160,31 +156,28 @@ static int parse_tag(const char* line, unsigned long long* out_movie_id, char** 
 }
 
 static int parse_movie(const char* line, Movie_t* movie) {
-    unsigned long id = 0;
+    unsigned long id = 0U;
     unsigned short index = 0U;
 
     // Working on Movie ID
-    while ((index < 300) && (':' != line[index])) {
-        id = (id * 10) + (line[index] - '0');
+    while ((index < MAX_LINE_LENGTH) && (':' != line[index])) {
+        id = (id * 10U) + (line[index] - '0');
         ++index;
     }
 
-    if (index >= 300) {
+    if (index >= (MAX_LINE_LENGTH - 1U)) {
         return MOVIE_PARSE_ERROR;
     }
 
-    if (id == 363) {
-        asm("nop");
-    }
     movie->id = id;
     index += 2; // Skip "::"
 
     // Working on Movie Title
-    // TODO: get year from title "Into the Wild (2007)"
+    // TODO: get year from title "Into the Wild (Something else) (2007)"
     const unsigned char title_start = index;
-    unsigned short year = 0;
+    unsigned short year = 0U;
     BOOL is_year_part = FALSE;
-    while (index < 300) {
+    while (index < (MAX_LINE_LENGTH - 1U)) {
         ++index;
         // TODO: Fix year parsing
         // if (')' == line[index]) {
@@ -196,12 +189,12 @@ static int parse_movie(const char* line, Movie_t* movie) {
         // if ('(' == line[index]) {
         //     is_year_part = TRUE;
         // }
-        if ((':' == line[index]) && (':' == line[index + 1])) {
+        if ((':' == line[index]) && (':' == line[index + 1U])) {
             break;
         }
     }
 
-    if (index >= 300) {
+    if (index >= (MAX_LINE_LENGTH - 1U)) {
         return MOVIE_PARSE_ERROR;
     }
 
@@ -212,15 +205,15 @@ static int parse_movie(const char* line, Movie_t* movie) {
     title[index - title_start] = '\0';  // Add terminating 0
     movie->title = title;
     // movie->year = year;
-    index += 2; // Skip "::"
+    index += 2U; // Skip "::"
 
     // Working on Movie Genres
     // TODO: Split genres to separate strings
     const unsigned char current_place = index;
-    while ((index < 300) && ('\0' != line[index])) {
+    while ((index < MAX_LINE_LENGTH) && ('\0' != line[index])) {
         ++index;
     }
-    if (index >= 300) {
+    if (index >= (MAX_LINE_LENGTH - 1U)) {
         return MOVIE_PARSE_ERROR;
     }
 
@@ -238,12 +231,11 @@ static int parse_movie(const char* line, Movie_t* movie) {
     return PARSE_OK;
 }
 
-// static int get_movie_by_id(unsigned long long movie_id, Movie_t* movies, Movie_t** out_movie) {
-static int get_movie_by_id(unsigned long long movie_id, Movie_t* movies, unsigned long long* out_movie_index) {
-    unsigned long long i = 0;
+static int get_movie_by_id(const unsigned long long movie_id, Movie_t const * const movies, unsigned long long* out_movie_index) {
+    unsigned long long i = 0U;
     while (true) {
         // TODO: Optimize to use binary search
-        Movie_t* temp = &movies[i];
+        const Movie_t* temp = &movies[i];
         if (NULL == temp) {
             return -1;
         }
@@ -255,8 +247,3 @@ static int get_movie_by_id(unsigned long long movie_id, Movie_t* movies, unsigne
     }
     return -1;
 }
-
-
-// static int add_tag_to_movie(char* tag, unsigned char tag_size, unsigned long long movie_id, Movie_t* movies, unsigned long long movies_count) {
-//     for (unsigned long long movie)
-// }
