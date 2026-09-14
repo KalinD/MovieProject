@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
     const unsigned long long movies_found_count = movie_search(movies, movies_count, title_keywords, title_keyword_size, years[0], genres, genres_size, tags, tags_size, &result_movies);
 
     for (unsigned long long movie_index = 0U; movie_index < movies_found_count; ++movie_index) {
-        printf("%s\n", result_movies[movie_index].title);
+        printf("%llu::%s::%s\n", result_movies[movie_index].id, result_movies[movie_index].title, result_movies[movie_index].genres);
     }
 
     free(result_movies);

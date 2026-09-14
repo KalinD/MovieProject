@@ -218,7 +218,7 @@ static int parse_movie(const char* line, Movie_t* movie) {
     }
 
     char* genres = (char*) malloc(sizeof(char) * (index - current_place + 1));
-    for (unsigned short position = current_place; position < index; ++position) {
+    for (unsigned short position = current_place; (position < index) && ('\n' != line[position]); ++position) {
         genres[position - current_place] = line[position];
     }
     genres[index - current_place] = '\0'; // Add terminating 0
