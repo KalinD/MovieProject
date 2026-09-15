@@ -1,10 +1,10 @@
 #include "parser.h"
 
-static int parse_movie(const char* line, Movie_t* movie);
-static int parse_tag(const char* line, unsigned long long* out_movie_id, char** out_tag);
-static int get_movie_by_id(const unsigned long long movie_id, Movie_t const * const movies, unsigned long long* out_movie_index);
+static int parse_movie(char const * const line, Movie_t * const movie);
+static int parse_tag(char const * const line, unsigned long long * const out_movie_id, char ** const out_tag);
+static int get_movie_by_id(unsigned long long const * const movie_id, Movie_t const * const movies, unsigned long long * const out_movie_index);
 
-int get_movies_count(unsigned long long *count) {
+int get_movies_count(unsigned long long * const count) {
     FILE* file = fopen("./movies.dat", "r");
 
     if (NULL == file) {
@@ -28,7 +28,7 @@ int get_movies_count(unsigned long long *count) {
     return PARSE_OK;
 }
 
-int parse_all(Movie_t* movies) {
+int parse_all(Movie_t * const movies) {
     FILE* file = fopen("./movies.dat", "r");
 
     if (NULL == file) {
@@ -61,7 +61,7 @@ int parse_all(Movie_t* movies) {
         parse_tag(line, &movie_id, &tag);
 
         unsigned long long current_movie_index = 0;
-        const int ret_val = get_movie_by_id(movie_id, movies, &current_movie_index);
+        const int ret_val = get_movie_by_id(&movie_id, movies, &current_movie_index);
         if (0 != ret_val) {
             // Error getting the movie!
             printf("No movie with id: %llu\n", movie_id);
@@ -94,7 +94,7 @@ int parse_all(Movie_t* movies) {
     return PARSE_OK;
 }
 
-static int parse_tag(const char* line, unsigned long long* out_movie_id, char** out_tag) {
+static int parse_tag(char const * const line, unsigned long long * const out_movie_id, char ** const out_tag) {
     unsigned long user_id = 0U;
     unsigned short index = 0U;
 
@@ -154,7 +154,7 @@ static int parse_tag(const char* line, unsigned long long* out_movie_id, char** 
     return PARSE_OK;
 }
 
-static int parse_movie(const char* line, Movie_t* movie) {
+static int parse_movie(char const * const line, Movie_t * const movie) {
     unsigned long id = 0U;
     unsigned short index = 0U;
 
@@ -200,7 +200,6 @@ static int parse_movie(const char* line, Movie_t* movie) {
     index += 2U; // Skip "::"
 
     // Working on Movie Genres
-    // TODO: Split genres to separate strings
     unsigned char genre_start = index;
     while ((index < MAX_LINE_LENGTH) && ('\0' != line[index]) && ('\n' != line[index])) {
         ++index;
@@ -245,7 +244,7 @@ static int parse_movie(const char* line, Movie_t* movie) {
     return PARSE_OK;
 }
 
-static int get_movie_by_id(const unsigned long long movie_id, Movie_t const * const movies, unsigned long long* out_movie_index) {
+static int get_movie_by_id(unsigned long long const * const movie_id, Movie_t const * const movies, unsigned long long * const out_movie_index) {
     unsigned long long i = 0U;
     while (true) {
         // TODO: Optimize to use binary search
@@ -253,7 +252,7 @@ static int get_movie_by_id(const unsigned long long movie_id, Movie_t const * co
         if (NULL == temp) {
             return -1;
         }
-        if (movie_id == temp->id) {
+        if (*movie_id == temp->id) {
             *out_movie_index = i;
             return 0;
         }
