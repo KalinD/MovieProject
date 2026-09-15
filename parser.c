@@ -67,15 +67,14 @@ int parse_all(Movie_t* movies) {
             printf("No movie with id: %llu\n", movie_id);
             continue;
         }
-        char** old_tags = movies[current_movie_index].tags;
-        char** new_tags = (char**) malloc(sizeof(char*) * (movies[current_movie_index].tags_count + 1));
+        char** new_tags = (char**) calloc((movies[current_movie_index].tags_count + 1), sizeof(char*));
         unsigned short i = 0;
         if (0 != movies[current_movie_index].tags_count) {
             for (i = 0U; i < movies[current_movie_index].tags_count; ++i) {
                 new_tags[i] = movies[current_movie_index].tags[i];
             }
         } else {
-            movies[current_movie_index].tags = malloc((sizeof(char*)));
+            movies[current_movie_index].tags = calloc(1, (sizeof(char*)));
         }
 
         new_tags[i] = tag;
@@ -134,7 +133,7 @@ static int parse_tag(const char* line, unsigned long long* out_movie_id, char** 
         return TAGS_PARSE_ERROR;
     }
 
-    char* tag = (char*) malloc(sizeof(char) * (index - tag_start + 1U));
+    char* tag = (char*) calloc((index - tag_start + 1U), sizeof(char));
     for (unsigned short position = tag_start; position < index; ++position) {
         tag[position - tag_start] = line[position];
     }
@@ -173,22 +172,10 @@ static int parse_movie(const char* line, Movie_t* movie) {
     index += 2; // Skip "::"
 
     // Working on Movie Title
-    // TODO: get year from title "Into the Wild (Something else) (2007)"
     const unsigned char title_start = index;
     unsigned short year = 0U;
-    BOOL is_year_part = FALSE;
     while (index < (MAX_LINE_LENGTH - 1U)) {
         ++index;
-        // TODO: Fix year parsing
-        // if (')' == line[index]) {
-        //     is_year_part = FALSE;
-        // }
-        // if (FALSE != is_year_part) {
-        //     year = (year * 10) + (line[index] - '0');
-        // }
-        // if ('(' == line[index]) {
-        //     is_year_part = TRUE;
-        // }
         if ((':' == line[index]) && (':' == line[index + 1U])) {
             break;
         }
@@ -198,34 +185,61 @@ static int parse_movie(const char* line, Movie_t* movie) {
         return MOVIE_PARSE_ERROR;
     }
 
-    char* title = (char*) malloc(sizeof(char) * (index - title_start + 1));
-    for (unsigned char position = title_start; position < index; ++position) {
+    char* title = (char*) calloc((((index - title_start) - YEAR_STRING_SIZE) + 1), sizeof(char));
+    for (unsigned short position = title_start; position < (index - YEAR_STRING_SIZE); ++position) {
         title[position - title_start] = line[position];
     }
-    title[index - title_start] = '\0';  // Add terminating 0
+    // 2U is for space and '('
+    // 4U is because movies exist only with year with 4 digits
+    for (unsigned short year_index = (index - YEAR_STRING_SIZE + 2U); year_index < (unsigned short)((index - YEAR_STRING_SIZE) + (2U + 4U)); ++year_index) {
+        year = (year * 10U) + (line[year_index] - '0');
+    }
+    title[index - title_start - YEAR_STRING_SIZE] = '\0';  // Add terminating 0
     movie->title = title;
-    // movie->year = year;
+    movie->year = year;
     index += 2U; // Skip "::"
 
     // Working on Movie Genres
     // TODO: Split genres to separate strings
-    const unsigned char current_place = index;
-    while ((index < MAX_LINE_LENGTH) && ('\0' != line[index])) {
+    unsigned char genre_start = index;
+    while ((index < MAX_LINE_LENGTH) && ('\0' != line[index]) && ('\n' != line[index])) {
         ++index;
     }
     if (index >= (MAX_LINE_LENGTH - 1U)) {
         return MOVIE_PARSE_ERROR;
     }
 
-    char* genres = (char*) malloc(sizeof(char) * (index - current_place + 1));
-    for (unsigned short position = current_place; (position < index) && ('\n' != line[position]); ++position) {
-        genres[position - current_place] = line[position];
+    char** genres = (char**) calloc(2U, sizeof(char*));
+    unsigned short genres_count = 0U;
+    unsigned short genres_max_size = 2U;
+    for (unsigned short position = genre_start; position < index; ++position) {
+        while ((MAX_LINE_LENGTH > position) && ('|' != line[position]) && ('\n' != line[position]) && '\0' != line[position]) {
+            ++position;
+        }
+        char* genre = (char*) calloc(((position - genre_start) + 1U), sizeof(char));
+        for (unsigned short genre_index = genre_start; genre_index < position; ++genre_index) {
+            genre[genre_index - genre_start] = line[genre_index];
+        }
+        genre[position - genre_start] = '\0'; // Add terminating 0
+        if ('|' == line[position]) {
+            genre_start = position + 1U;
+        }
+        if (genres_count + 1U >= genres_max_size) {
+            char** temp_genres = (char**) calloc(genres_max_size << 1, sizeof(char*));
+            for (unsigned short temp_index = 0U; temp_index < genres_count; ++temp_index) {
+                temp_genres[temp_index] = genres[temp_index];
+            }
+            free(genres);
+            genres = temp_genres;
+            genres_max_size <<= 1;
+        }
+        genres[genres_count] = genre;
+        ++genres_count;
     }
-    genres[index - current_place] = '\0'; // Add terminating 0
     movie->genres = genres;
+    movie->genres_count = genres_count;
 
     // Init rest of params
-    movie->genres_count = 0U;
     movie->tags_count = 0U;
 
     return PARSE_OK;
