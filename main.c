@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
     unsigned long long movies_count = 0U;
     (void) get_movies_count(&movies_count);
     Movie_t* movies = (Movie_t*) calloc(movies_count, sizeof(Movie_t));
-    const int ret_val = parse_all(movies);
+    const int ret_val = parse_all(movies, &movies_count);
     switch (ret_val) {
         case PARSE_OK:
             // Everything went ok

@@ -15,6 +15,6 @@
 #define YEAR_STRING_SIZE 7U // Handle the space, parentheses, and year " (2005)"
 
 int get_movies_count(unsigned long long * const count);
-int parse_all(Movie_t * const movies);
+int parse_all(Movie_t * const movies, unsigned long long const * const movies_size);
 
 #endif // PARSER_H

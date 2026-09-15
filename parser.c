@@ -2,7 +2,7 @@
 
 static int parse_movie(char const * const line, Movie_t * const movie);
 static int parse_tag(char const * const line, unsigned long long * const out_movie_id, char ** const out_tag);
-static int get_movie_by_id(unsigned long long const * const movie_id, Movie_t const * const movies, unsigned long long * const out_movie_index);
+static int get_movie_by_id(unsigned long long const * const movie_id, Movie_t const * const movies, unsigned long long const * const movies_size, unsigned long long * const out_movie_index);
 
 int get_movies_count(unsigned long long * const count) {
     FILE* file = fopen("./movies.dat", "r");
@@ -28,7 +28,7 @@ int get_movies_count(unsigned long long * const count) {
     return PARSE_OK;
 }
 
-int parse_all(Movie_t * const movies) {
+int parse_all(Movie_t * const movies, unsigned long long const * const movies_size) {
     FILE* file = fopen("./movies.dat", "r");
 
     if (NULL == file) {
@@ -61,7 +61,7 @@ int parse_all(Movie_t * const movies) {
         parse_tag(line, &movie_id, &tag);
 
         unsigned long long current_movie_index = 0;
-        const int ret_val = get_movie_by_id(&movie_id, movies, &current_movie_index);
+        const int ret_val = get_movie_by_id(&movie_id, movies, movies_size, &current_movie_index);
         if (0 != ret_val) {
             // Error getting the movie!
             printf("No movie with id: %llu\n", movie_id);
@@ -244,19 +244,35 @@ static int parse_movie(char const * const line, Movie_t * const movie) {
     return PARSE_OK;
 }
 
-static int get_movie_by_id(unsigned long long const * const movie_id, Movie_t const * const movies, unsigned long long * const out_movie_index) {
+static int get_movie_by_id(unsigned long long const * const movie_id, Movie_t const * const movies, unsigned long long const * const movies_size, unsigned long long * const out_movie_index) {
     unsigned long long i = 0U;
-    while (true) {
-        // TODO: Optimize to use binary search
-        const Movie_t* temp = &movies[i];
-        if (NULL == temp) {
-            return -1;
+    // log_2(10681) = 13.4 (10681 is the number of values in current .dat file
+    // Can be calculated dynamically.
+    // For values up to 15 (just in case) handle linearly.
+    // Everything else is handled with binary search for log_2 efficiency.
+    if (*movie_id <= 15) {
+        for (unsigned short index = 0; index <= 15; ++index) {
+            if (*movie_id == movies[index].id) {
+                *out_movie_index = index;
+                return 0;
+            }
         }
-        if (*movie_id == temp->id) {
-            *out_movie_index = i;
-            return 0;
-        }
-        ++i;
+        return  -1;
     }
+    unsigned long long l = 0U;
+    unsigned long long r = (*movies_size - 1U);
+    unsigned long long m = (r + l) / 2U;
+    while (l < r) {
+        if (*movie_id == movies[m].id) {
+            *out_movie_index = m;
+            return 0;
+        } else if (*movie_id > movies[m].id) {
+            l = m;
+        } else if (*movie_id < movies[m].id) {
+            r = m;
+        }
+        m = (r + l) / 2;
+    }
+    return -1;
     return -1;
 }
