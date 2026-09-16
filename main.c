@@ -4,7 +4,7 @@
 #include "parser.h"
 
 // TODO: add struct to shoten parameter list
-static unsigned long long movie_search(Movie_t const * const movies, unsigned long long const * const movies_count, char** titles, const unsigned char titles_count, unsigned short const * const year, char** genres, const unsigned char genres_count, char** tags, const unsigned char tags_count, Movie_t** const out_movies);
+static unsigned long long movie_search(Movie_t const * const movies, unsigned long long const * const movies_count, char** titles, const unsigned char titles_count, const unsigned short year, char** genres, const unsigned char genres_count, char** tags, const unsigned char tags_count, Movie_t** const out_movies);
 
 int main(int argc, char** argv) {
     unsigned long long movies_count = 0U;
@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
     }
 
     Movie_t* result_movies;
-    const unsigned long long movies_found_count = movie_search(movies, &movies_count, title_keywords, title_keyword_size, &year, genres, genres_size, tags, tags_size, &result_movies);
+    const unsigned long long movies_found_count = movie_search(movies, &movies_count, title_keywords, title_keyword_size, year, genres, genres_size, tags, tags_size, &result_movies);
 
     free(title_keywords);
     free(genres);
@@ -134,13 +134,13 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-static unsigned long long movie_search(Movie_t const * const movies, unsigned long long const * const movies_count, char** titles, const unsigned char titles_count, unsigned short const * const year, char** genres, const unsigned char genres_count, char** tags, const unsigned char tags_count, Movie_t** const out_movies) {
+static unsigned long long movie_search(Movie_t const * const movies, unsigned long long const * const movies_count, char** titles, const unsigned char titles_count, const unsigned short year, char** genres, const unsigned char genres_count, char** tags, const unsigned char tags_count, Movie_t** const out_movies) {
     Movie_t* valid_movies = (Movie_t*) calloc(4U, sizeof(Movie_t)); // We will start will 4
     unsigned long long max_size = 4U;
     unsigned long long found_movies_count = 0U;
     for (unsigned long long index = 0U; index < *movies_count; ++index) {
         // Filter Year
-        if ((0 != *year) && (*year != movies[index].year)) { // No movie released with Jesus
+        if ((0 != year) && (year != movies[index].year)) { // No movie released with Jesus
             continue;
         }
 
@@ -205,7 +205,7 @@ static unsigned long long movie_search(Movie_t const * const movies, unsigned lo
             }
             free(valid_movies);
             valid_movies = temp_movies;
-            temp_movies = nullptr;
+            temp_movies = NULL;
             max_size <<= 1U;
         }
         valid_movies[found_movies_count] = movies[index];
