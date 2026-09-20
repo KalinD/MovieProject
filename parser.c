@@ -1,7 +1,12 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "parser.h"
 
 static int parse_movie(char const * const line, Movie_t * const movie);
 static int parse_tag(char const * const line, unsigned long long * const out_movie_id, char ** const out_tag);
+static int parse_rating(char const * const line, unsigned long long * const out_movie_id, unsigned char * const out_rating);
 static int get_movie_by_id(unsigned long long const * const movie_id, Movie_t const * const movies, unsigned long long const * const movies_size, unsigned long long * const out_movie_index);
 
 int get_movies_count(unsigned long long * const count) {
@@ -52,7 +57,7 @@ int parse_all(Movie_t * const movies, unsigned long long const * const movies_si
     file = fopen("./tags.dat", "r");
     if (NULL == file) {
         printf("File 'tags.dat' could not be opened.\n");
-        return MOVIE_PARSE_ERROR;
+        return TAGS_PARSE_ERROR;
     }
 
     while (NULL != fgets(line, MAX_LINE_LENGTH, file)) { // Longest Tag line was around 111 characters
@@ -87,8 +92,89 @@ int parse_all(Movie_t * const movies, unsigned long long const * const movies_si
     }
 
     if (0 != fclose(file)) {
-        printf("File 'movies.dat' could not be closed.\n");
+        printf("File 'tags.dat' could not be closed.\n");
+        return TAGS_PARSE_ERROR;
+    }
+
+    // Get Ratings
+    file = fopen("./ratings.dat", "r");
+    if (NULL == file) {
+        printf("File 'ratings.dat' could not be opened.\n");
+        return RATINGS_PARSE_ERROR;
+    }
+
+    while (NULL != fgets(line, MAX_LINE_LENGTH, file)) { // Longest Tag line was around 111 characters
+        unsigned long long movie_id = 0;
+        unsigned char rating;
+        parse_rating(line, &movie_id, &rating);
+
+        unsigned long long current_movie_index = 0;
+        const int ret_val = get_movie_by_id(&movie_id, movies, movies_size, &current_movie_index);
+        if (0 != ret_val) {
+            // Error getting the movie!
+            printf("No movie with id: %llu\n", movie_id);
+            continue;
+        }
+
+        movies[current_movie_index].rating = ((movies[current_movie_index].rating * movies[current_movie_index].ratings_count) + rating) / (movies[current_movie_index].ratings_count + 1U);
+        ++movies[current_movie_index].ratings_count;
+    }
+
+    if (0 != fclose(file)) {
+        printf("File 'ratings.dat' could not be closed.\n");
         return MOVIE_PARSE_ERROR;
+    }
+
+    return PARSE_OK;
+}
+
+static int parse_rating(char const * const line, unsigned long long * const out_movie_id, unsigned char * const out_rating) {
+    // UserID::MovieID::Rating::Timestamp
+    unsigned long user_id = 0U;
+    unsigned short index = 0U;
+
+    // Working on User ID - currently ignored
+    while ((index < MAX_LINE_LENGTH) && (':' != line[index])) {
+        user_id = (user_id * 10U) + (line[index] - '0');
+        ++index;
+    }
+    if (index >= (MAX_LINE_LENGTH - 1U)) {
+        return TAGS_PARSE_ERROR;
+    }
+    index += 2U; // Skip "::"
+
+    // Working on Movie ID
+    unsigned long long movie_id = 0U;
+    while ((index < MAX_LINE_LENGTH) && (':' != line[index])) {
+        movie_id = (movie_id * 10U) + (line[index] - '0');
+        ++index;
+    }
+    if (index >= (MAX_LINE_LENGTH - 1U)) {
+        return TAGS_PARSE_ERROR;
+    }
+    *out_movie_id = movie_id;
+    index += 2U; // Skip "::"
+
+    // Working on Rating
+    // Should be 1 character
+    unsigned char rating = 0U;
+    if (('0' <= line[index]) && (line[index] <= '5')) { // ratings go to 5
+        rating = (line[index] - '0');
+    } else {
+        printf("Trying to parse rating %c!\n", line[index]);
+        return RATINGS_PARSE_ERROR;
+    }
+    *out_rating = rating;
+    index += 2U; // Skip "::"
+
+    // Working on Timestamp - Not used yet
+    unsigned long long timestamp = 0U;
+    while ((index < MAX_LINE_LENGTH) && ('\0' != line[index])) {
+        timestamp = (timestamp * 10U) + (line[index] - '0');
+        ++index;
+    }
+    if (index >= MAX_LINE_LENGTH) {
+        return TAGS_PARSE_ERROR;
     }
 
     return PARSE_OK;

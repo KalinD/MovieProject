@@ -1,15 +1,12 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "common.h"
 
-#define PARSE_OK 0
-#define MOVIE_PARSE_ERROR 1
-#define TAGS_PARSE_ERROR 2
+#define PARSE_OK 0U
+#define MOVIE_PARSE_ERROR 1U
+#define TAGS_PARSE_ERROR 2U
+#define RATINGS_PARSE_ERROR 3U
 
 #define MAX_LINE_LENGTH 300U // Longest found was 200-250
 #define YEAR_STRING_SIZE 7U // Handle the space, parentheses, and year " (2005)"

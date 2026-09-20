@@ -1,4 +1,7 @@
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "common.h"
 #include "parser.h"
@@ -114,7 +117,8 @@ int main(int argc, char** argv) {
         for (unsigned char genre_index = 0U; genre_index < result_movies[movie_index].genres_count - 1U; ++genre_index) {
             printf("%s|", result_movies[movie_index].genres[genre_index]);
         }
-        printf("%s\n", result_movies[movie_index].genres[result_movies[movie_index].genres_count - 1U]);
+        printf("%s", result_movies[movie_index].genres[result_movies[movie_index].genres_count - 1U]);
+        printf(" %.2Lf\n", result_movies[movie_index].rating);
     }
 
     for (unsigned long long movie_index = 0U; movie_index < movies_count; ++movie_index) {

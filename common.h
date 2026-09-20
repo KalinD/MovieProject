@@ -13,6 +13,8 @@ typedef struct {
     unsigned char genres_count;
     char** tags;
     unsigned short tags_count;
+    unsigned long long ratings_count;
+    long double rating;
 } Movie_t;
 
 #endif // COMMON_H
