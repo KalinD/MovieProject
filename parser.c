@@ -261,18 +261,16 @@ static int get_movie_by_id(unsigned long long const * const movie_id, Movie_t co
     }
     unsigned long long l = 0U;
     unsigned long long r = (*movies_size - 1U);
-    unsigned long long m = (r + l) / 2U;
-    while (l < r) {
+    while (l <= r) {
+        const unsigned long long m = l + (r - l) / 2U;
         if (*movie_id == movies[m].id) {
             *out_movie_index = m;
             return 0;
         } else if (*movie_id > movies[m].id) {
-            l = m;
+            l = m + 1;
         } else if (*movie_id < movies[m].id) {
-            r = m;
+            r = m - 1;
         }
-        m = (r + l) / 2;
     }
-    return -1;
     return -1;
 }
