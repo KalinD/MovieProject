@@ -1,10 +1,6 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#define BOOL unsigned char
-#define TRUE (0 == 0)
-#define FALSE (1 == 0)
-
 typedef struct {
     unsigned long long id;
     char* title;

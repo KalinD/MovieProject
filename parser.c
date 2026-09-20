@@ -18,7 +18,7 @@ int get_movies_count(unsigned long long * const count) {
     }
 
     unsigned long long movies_count = 0;
-    while (TRUE != feof(file)) {
+    while (false == feof(file)) {
         if ('\n' == fgetc(file)) {
             ++movies_count;
         }

@@ -149,55 +149,55 @@ static unsigned long long movie_search(Movie_t const * const movies, unsigned lo
         }
 
         // Filter Title
-        BOOL has_missing = FALSE;
+        bool has_missing = false;
         for (unsigned char title_index = 0U; title_index < titles_count; ++title_index) {
             if (NULL == strstr(movies[index].title, titles[title_index])) {
                 // One of the required keywords is missing
-                has_missing = TRUE;
+                has_missing = true;
                 break;
             }
         }
-        if (TRUE == has_missing) {
+        if (false != has_missing) {
             continue;
         }
 
         // Filter genre
-        has_missing = FALSE;
+        has_missing = false;
         for (unsigned char genre_index = 0U; genre_index < genres_count; ++genre_index) {
-            BOOL has_genre = FALSE;
+            bool has_genre = false;
             for (unsigned char movie_genre_index = 0U; movie_genre_index < movies[index].genres_count; ++movie_genre_index) {
                 if (0 == strcmp(genres[genre_index], movies[index].genres[movie_genre_index])) {
-                    has_genre = TRUE;
+                    has_genre = true;
                     break;
                 }
             }
-            if (FALSE == has_genre) {
-                has_missing = TRUE;
+            if (false == has_genre) {
+                has_missing = true;
                 break;
             }
         }
 
-        if (FALSE != has_missing) {
+        if (false != has_missing) {
             continue;
         }
 
         // Filter Tags
-        has_missing = FALSE;
+        has_missing = false;
         for (unsigned char tags_index = 0U; tags_index < tags_count; ++tags_index) {
-            BOOL found_tag = FALSE;
+            bool found_tag = false;
             for (unsigned short movie_tags_index = 0U; movie_tags_index < movies[index].tags_count; ++movie_tags_index) {
                 if (NULL != strstr(movies[index].tags[movie_tags_index], tags[tags_index])) {
-                    found_tag = TRUE;
+                    found_tag = true;
                     break;
                 }
             }
-            if (FALSE == found_tag) {
-                has_missing = TRUE;
+            if (false == found_tag) {
+                has_missing = true;
                 break;
             }
         }
 
-        if (FALSE != has_missing) {
+        if (false != has_missing) {
             continue;
         }
 
