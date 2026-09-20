@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
 }
 
 static unsigned long long movie_search(Movie_t const * const movies, unsigned long long const * const movies_count, char** titles, const unsigned char titles_count, const unsigned short year, char** genres, const unsigned char genres_count, char** tags, const unsigned char tags_count, Movie_t** const out_movies) {
-    Movie_t* valid_movies = (Movie_t*) calloc(4U, sizeof(Movie_t)); // We will start will 4
+    Movie_t* valid_movies = (Movie_t*) calloc(4U, sizeof(Movie_t)); // We will start with 4
     unsigned long long max_size = 4U;
     unsigned long long found_movies_count = 0U;
     for (unsigned long long index = 0U; index < *movies_count; ++index) {
